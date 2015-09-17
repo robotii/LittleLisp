@@ -103,13 +103,7 @@ namespace LittleLisp
 
         private static int OpenBrackets(string s)
         {
-            int o = 0;
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (s[i] == '(') o++;
-                if (s[i] == ')') o--;
-            }
-            return o;
+            return s.Replace("(", "").Length - s.Replace("(", "").Length;
         }
 
         private static void Error(string fmt)
@@ -248,51 +242,41 @@ namespace LittleLisp
         // Prints the given object.
         private void Print(Obj obj)
         {
-            switch (obj.Type)
+            if (obj.Type == Tint)
+                Print(obj.Value.ToString());
+            else if (obj.Type == Tcell)
             {
-                case Tint:
-                    Print(obj.Value.ToString());
-                    return;
-                case Tcell:
-                    Print("(");
-                    while (true)
+                Print("(");
+                while (true)
+                {
+                    Print(obj.First);
+                    if (obj.Rest == Nil)
+                        break;
+                    if (obj.Rest.Type != Tcell)
                     {
-                        Print(obj.First);
-                        if (obj.Rest == Nil)
-                            break;
-                        if (obj.Rest.Type != Tcell)
-                        {
-                            Print(" . ");
-                            Print(obj.Rest);
-                            break;
-                        }
-                        Print(" ");
-                        obj = obj.Rest;
+                        Print(" . ");
+                        Print(obj.Rest);
+                        break;
                     }
-                    Print(")");
-                    return;
-                case Tsymbol:
-                    Print(obj.Name);
-                    return;
-                case Tprimitive:
-                    Print("<primitive>");
-                    return;
-                case Tfunction:
-                    Print("<function>");
-                    return;
-                case Tmacro:
-                    Print("<macro>");
-                    return;
-                case Tnil:
-                    Print("()");
-                    return;
-                case Ttrue:
-                    Print("t");
-                    return;
-                default:
-                    Error(string.Format("Bug: print: Unknown tag type: {0}", obj.Type));
-                    break;
+                    Print(" ");
+                    obj = obj.Rest;
+                }
+                Print(")");
             }
+            else if (obj.Type == Tsymbol)
+                Print(obj.Name);
+            else if (obj.Type == Tprimitive)
+                Print("<primitive>");
+            else if (obj.Type == Tfunction)
+                Print("<function>");
+            else if (obj.Type == Tmacro)
+                Print("<macro>");
+            else if (obj.Type == Tnil)
+                Print("()");
+            else if (obj.Type == Ttrue)
+                Print("t");
+            else
+                Error(string.Format("Bug: print: Unknown tag type: {0}", obj.Type));
         }
 
         private int ListLength(Obj list)
@@ -434,7 +418,7 @@ namespace LittleLisp
                     Obj fn = obj.First;
                     fn = Eval(env, fn);
                     Obj args = (obj).Rest;
-                    if (fn.Type != Tprimitive && (fn).Type != Tfunction)
+                    if (fn.Type != Tprimitive && fn.Type != Tfunction)
                         Error("The head of a list must be a function");
                     return Apply(env, fn, args);
                 }
@@ -607,7 +591,7 @@ namespace LittleLisp
         }
 
         // (while cond expr ...)
-        private Obj prim_while(Obj env, Obj list)
+        private Obj PrimWhile(Obj env, Obj list)
         {
             if (ListLength(list) < 2)
                 Error("Malformed while");
@@ -692,7 +676,7 @@ namespace LittleLisp
             AddVariable(env, Intern("car"), MakePrimitive(PrimFirst));
             AddVariable(env, Intern("cdr"), MakePrimitive(PrimRest));
             AddVariable(env, Intern("setcar"), MakePrimitive(PrimSetFirst));
-            AddVariable(env, Intern("while"), MakePrimitive(prim_while));
+            AddVariable(env, Intern("while"), MakePrimitive(PrimWhile));
             AddVariable(env, Intern("gensym"), MakePrimitive(PrimGenSym));
             AddVariable(env, Intern("<"), MakePrimitive(PrimNumLt));
             AddVariable(env, Intern("eq"), MakePrimitive(PrimEq));

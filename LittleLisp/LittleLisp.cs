@@ -282,7 +282,6 @@ namespace LittleLisp
         private int ListLength(Obj list)
         {
             int len = 0;
-
             for (; list.Type == Tcell; list = list.Rest)
                 len++;
             return list == Nil ? len : -1;
@@ -472,9 +471,7 @@ namespace LittleLisp
             Obj bind = Find(env, list.First);
             if (bind == null)
                 Error(string.Format("Unbound variable {0}", list.First.Name));
-            Obj value = Eval(env, list.Rest.First);
-            bind.Rest = value;
-            return value;
+            return bind.Rest = Eval(env, list.Rest.First);
         }
 
         // (+ <integer> ...)
@@ -516,9 +513,8 @@ namespace LittleLisp
                     Error("Parameter must be a symbol");
             if (p != Nil && p.Type != Tsymbol)
                 Error("Parameter must be a symbol");
-            Obj first = list.First;
-            Obj rest = list.Rest;
-            return MakeFunction(type, first, rest, env);
+
+            return MakeFunction(type, list.First, list.Rest, env);
         }
 
         // (lambda (<symbol> ...) expr ...)
@@ -583,9 +579,8 @@ namespace LittleLisp
             if (ListLength(list) < 2)
                 Error("Malformed if");
             if (Eval(env, list.First) != Nil)
-            {
                 return Eval(env, list.Rest.First);
-            }
+
             Obj els = list.Rest.Rest;
             return els == Nil ? Nil : Progn(env, els);
         }
@@ -596,9 +591,8 @@ namespace LittleLisp
             if (ListLength(list) < 2)
                 Error("Malformed while");
             while (Eval(env, list.First) != Nil)
-            {
                 EvalList(env, list.Rest);
-            }
+
             return Nil;
         }
 

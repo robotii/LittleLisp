@@ -103,7 +103,7 @@ namespace LittleLisp
 
         private static int OpenBrackets(string s)
         {
-            return s.Replace("(", "").Length - s.Replace("(", "").Length;
+            return s.Replace(")", "").Length - s.Replace("(", "").Length;
         }
 
         private static void Error(string fmt)

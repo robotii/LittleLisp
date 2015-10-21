@@ -33,11 +33,11 @@ namespace LittleLisp
 
         // Constants
         private const string SymbolChars = "~!@#$%^&*-_=+:/?<>";
-        private readonly Obj Nil;
-        private readonly Obj Dot;
-        private readonly Obj Cparen;
-        private readonly Obj True;
-        private readonly Obj Rootenv;
+        private readonly Obj _nil;
+        private readonly Obj _dot;
+        private readonly Obj _cparen;
+        private readonly Obj _true;
+        private readonly Obj _rootenv;
 
         private string _currentSource;
         private int _currentPos;
@@ -50,8 +50,8 @@ namespace LittleLisp
         // Destructively reverses the given list.
         private Obj Reverse(Obj p)
         {
-            Obj ret = Nil;
-            while (p != Nil)
+            Obj ret = _nil;
+            while (p != _nil)
             {
                 Obj head = p;
                 p = p.Rest;
@@ -153,18 +153,18 @@ namespace LittleLisp
         // Reads a list. Note that '(' has already been read.
         private Obj ReadList()
         {
-            Obj head = Nil;
+            Obj head = _nil;
             while (true)
             {
                 Obj obj = Read();
                 if (obj == null)
                     Error("Unclosed parenthesis");
-                if (obj == Cparen)
+                if (obj == _cparen)
                     return Reverse(head);
-                if (obj == Dot)
+                if (obj == _dot)
                 {
                     Obj last = Read();
-                    if (Read() != Cparen)
+                    if (Read() != _cparen)
                         Error("Closed parenthesis expected after dot");
                     Obj ret = Reverse(head);
                     (head).Rest = last;
@@ -178,7 +178,7 @@ namespace LittleLisp
         // but return the existing one.
         private Obj Intern(string name)
         {
-            for (Obj p = _symbols; p != Nil; p = p.Rest)
+            for (Obj p = _symbols; p != _nil; p = p.Rest)
                 if (name == p.First.Name)
                     return p.First;
             Obj sym = MakeSymbol(name);
@@ -190,7 +190,7 @@ namespace LittleLisp
         private Obj ReadQuote()
         {
             Obj sym = Intern("quote");
-            return Join(sym, Join(Read(), Nil));
+            return Join(sym, Join(Read(), _nil));
         }
 
         private int ReadNumber(int val)
@@ -224,9 +224,9 @@ namespace LittleLisp
                 if (c == '(')
                     return ReadList();
                 if (c == ')')
-                    return Cparen;
+                    return _cparen;
                 if (c == '.')
-                    return Dot;
+                    return _dot;
                 if (c == '\'')
                     return ReadQuote();
                 if (IsDigit(c))
@@ -250,7 +250,7 @@ namespace LittleLisp
                 while (true)
                 {
                     Print(obj.First);
-                    if (obj.Rest == Nil)
+                    if (obj.Rest == _nil)
                         break;
                     if (obj.Rest.Type != Tcell)
                     {
@@ -284,7 +284,7 @@ namespace LittleLisp
             int len = 0;
             for (; list.Type == Tcell; list = list.Rest)
                 len++;
-            return list == Nil ? len : -1;
+            return list == _nil ? len : -1;
         }
 
         private static void AddVariable(Obj env, Obj sym, Obj val)
@@ -295,7 +295,7 @@ namespace LittleLisp
         // Returns a newly created environment frame.
         private Obj PushEnv(Obj env, Obj vars, Obj values)
         {
-            Obj map = Nil;
+            Obj map = _nil;
             for (; vars.Type == Tcell; vars = vars.Rest, values = values.Rest)
             {
                 if (values.Type != Tcell)
@@ -304,7 +304,7 @@ namespace LittleLisp
                 Obj val = values.First;
                 map = Acons(sym, val, map);
             }
-            if (vars != Nil)
+            if (vars != _nil)
                 map = Acons(vars, values, map);
             return MakeEnv(map, env);
         }
@@ -313,7 +313,7 @@ namespace LittleLisp
         private Obj Progn(Obj env, Obj list)
         {
             Obj r = null;
-            for (Obj lp = list; lp != Nil; lp = lp.Rest)
+            for (Obj lp = list; lp != _nil; lp = lp.Rest)
                 r = Eval(env, lp.First);
             return r;
         }
@@ -321,8 +321,8 @@ namespace LittleLisp
         // Evaluates all the list elements and returns their return values as a new list.
         private Obj EvalList(Obj env, Obj list)
         {
-            Obj head = Nil;
-            for (Obj lp = list; lp != Nil; lp = lp.Rest)
+            Obj head = _nil;
+            for (Obj lp = list; lp != _nil; lp = lp.Rest)
             {
                 Obj expr = lp.First;
                 Obj result = Eval(env, expr);
@@ -333,7 +333,7 @@ namespace LittleLisp
 
         private bool IsList(Obj obj)
         {
-            return obj == Nil || obj.Type == Tcell;
+            return obj == _nil || obj.Type == Tcell;
         }
 
         private Obj ApplyFunction(Obj env, Obj fn, Obj args)
@@ -358,15 +358,15 @@ namespace LittleLisp
                 return ApplyFunction(env, fn, eargs);
             }
             Error("not supported");
-            return Nil;
+            return _nil;
         }
 
         // Searches for a variable by symbol. Returns null if not found.
         private Obj Find(Obj env, Obj sym)
         {
-            for (Obj p = env; p != Nil; p = p.Rest)
+            for (Obj p = env; p != _nil; p = p.Rest)
             {
-                for (Obj cell = p.First; cell != Nil; cell = cell.Rest)
+                for (Obj cell = p.First; cell != _nil; cell = cell.Rest)
                 {
                     Obj bind = cell.First;
                     if (sym == bind.First)
@@ -423,7 +423,7 @@ namespace LittleLisp
                 }
 
                 Error(string.Format("Bug: eval: Unknown tag type: {0}", obj.Type));
-                return Nil;
+                return _nil;
             }
         }
 
@@ -449,7 +449,7 @@ namespace LittleLisp
         private Obj PrimFirst(Obj env, Obj list)
         {
             Obj args = EvalList(env, list);
-            if (args.First.Type != Tcell || args.Rest != Nil)
+            if (args.First.Type != Tcell || args.Rest != _nil)
                 Error("Malformed first");
             return args.First.First;
         }
@@ -458,7 +458,7 @@ namespace LittleLisp
         private Obj PrimRest(Obj env, Obj list)
         {
             Obj args = EvalList(env, list);
-            if (args.First.Type != Tcell || args.Rest != Nil)
+            if (args.First.Type != Tcell || args.Rest != _nil)
                 Error("Malformed rest");
             return args.First.Rest;
         }
@@ -478,7 +478,7 @@ namespace LittleLisp
         private Obj PrimPlus(Obj env, Obj list)
         {
             int sum = 0;
-            for (Obj args = EvalList(env, list); args != Nil; args = args.Rest)
+            for (Obj args = EvalList(env, list); args != _nil; args = args.Rest)
             {
                 if (args.First.Type != Tint)
                     Error("+ takes only numbers");
@@ -491,13 +491,13 @@ namespace LittleLisp
         private Obj PrimMinus(Obj env, Obj list)
         {
             Obj args = EvalList(env, list);
-            for (Obj p = args; p != Nil; p = p.Rest)
+            for (Obj p = args; p != _nil; p = p.Rest)
                 if (p.First.Type != Tint)
                     Error("- takes only numbers");
             int r = args.First.Value;
-            if (args.Rest == Nil)
+            if (args.Rest == _nil)
                 return MakeInt(-r);
-            for (Obj p = args.Rest; p != Nil; p = p.Rest)
+            for (Obj p = args.Rest; p != _nil; p = p.Rest)
                 r -= p.First.Value;
             return MakeInt(r);
         }
@@ -511,7 +511,7 @@ namespace LittleLisp
             for (; p.Type == Tcell; p = p.Rest)
                 if (p.First.Type != Tsymbol)
                     Error("Parameter must be a symbol");
-            if (p != Nil && p.Type != Tsymbol)
+            if (p != _nil && p.Type != Tsymbol)
                 Error("Parameter must be a symbol");
 
             return MakeFunction(type, list.First, list.Rest, env);
@@ -570,7 +570,7 @@ namespace LittleLisp
         {
             Print(Eval(env, list.First));
             Print("\n");
-            return Nil;
+            return _nil;
         }
 
         // (if expr expr expr ...)
@@ -578,11 +578,11 @@ namespace LittleLisp
         {
             if (ListLength(list) < 2)
                 Error("Malformed if");
-            if (Eval(env, list.First) != Nil)
+            if (Eval(env, list.First) != _nil)
                 return Eval(env, list.Rest.First);
 
             Obj els = list.Rest.Rest;
-            return els == Nil ? Nil : Progn(env, els);
+            return els == _nil ? _nil : Progn(env, els);
         }
 
         // (while cond expr ...)
@@ -590,10 +590,10 @@ namespace LittleLisp
         {
             if (ListLength(list) < 2)
                 Error("Malformed while");
-            while (Eval(env, list.First) != Nil)
+            while (Eval(env, list.First) != _nil)
                 EvalList(env, list.Rest);
 
-            return Nil;
+            return _nil;
         }
 
         // (gensym)
@@ -622,7 +622,7 @@ namespace LittleLisp
             Obj y = values.Rest.First;
             if (x.Type != Tint || y.Type != Tint)
                 Error("= only takes numbers");
-            return x.Value == y.Value ? True : Nil;
+            return x.Value == y.Value ? _true : _nil;
         }
 
         // (< <integer> <integer>)
@@ -635,7 +635,7 @@ namespace LittleLisp
             Obj y = args.Rest.First;
             if (x.Type != Tint || y.Type != Tint)
                 Error("< takes only numbers");
-            return x.Value < y.Value ? True : Nil;
+            return x.Value < y.Value ? _true : _nil;
         }
 
         // (eq expr expr)
@@ -644,12 +644,12 @@ namespace LittleLisp
             if (ListLength(list) != 2)
                 Error("Malformed eq");
             Obj values = EvalList(env, list);
-            return values.First == values.Rest.First ? True : Nil;
+            return values.First == values.Rest.First ? _true : _nil;
         }
 
         private void DefineConstants(Obj env)
         {
-            AddVariable(env, Intern("t"), True);
+            AddVariable(env, Intern("t"), _true);
         }
 
         private void DefinePrimitives(Obj env)
@@ -678,7 +678,7 @@ namespace LittleLisp
 
         public void Repl(Obj env)
         {
-            env = env ?? Rootenv;
+            env = env ?? _rootenv;
             while (true)
             {
                 try
@@ -700,19 +700,19 @@ namespace LittleLisp
 
         public Obj Eval(string s, Obj env)
         {
-            env = env ?? Rootenv;
+            env = env ?? _rootenv;
             _currentSource = s;
             _currentPos = 0;
 
-            Obj expr = Nil;
+            Obj expr = _nil;
             while (_currentPos < _currentSource.Length)
             {
                 expr = Read();
                 if (expr == null)
                     return null;
-                if (expr == Cparen)
+                if (expr == _cparen)
                     Error("Stray close parenthesis");
-                if (expr == Dot)
+                if (expr == _dot)
                     Error("Stray dot");
                 expr = Eval(env, expr);
             }
@@ -721,14 +721,14 @@ namespace LittleLisp
 
         public LittleLisp()
         {
-            Nil = MakeSpecial(Tnil);
-            Dot = MakeSpecial(Tdot);
-            Cparen = MakeSpecial(Tcparen);
-            True = MakeSpecial(Ttrue);
-            _symbols = Nil;
-            Rootenv = MakeEnv(Nil, null);
-            DefineConstants(Rootenv);
-            DefinePrimitives(Rootenv);
+            _nil = MakeSpecial(Tnil);
+            _dot = MakeSpecial(Tdot);
+            _cparen = MakeSpecial(Tcparen);
+            _true = MakeSpecial(Ttrue);
+            _symbols = _nil;
+            _rootenv = MakeEnv(_nil, null);
+            DefineConstants(_rootenv);
+            DefinePrimitives(_rootenv);
         }
 
         static void Main(string[] args)
